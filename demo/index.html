@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Autopen Signature Tool</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        min-height: 100vh;
+        padding: 20px;
+        color: #e8e8e8;
+      }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      h1 {
+        text-align: center;
+        margin-bottom: 12px;
+        font-weight: 300;
+        color: #7eb8da;
+      }
+      .intro {
+        text-align: center;
+        margin-bottom: 24px;
+        color: #d0d0d0;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .canvas-section {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+
+      .canvas-wrapper {
+        background: #0f0f1a;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+      .canvas-wrapper h2 {
+        margin-bottom: 12px;
+        font-weight: 400;
+        font-size: 14px;
+        color: #d0d0d0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .canvas-wrapper h2 .indicator {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .canvas-wrapper h2 .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+      .input-label .dot {
+        background: #4ade80;
+      }
+      .input-label::before {
+        content: "✏️";
+        font-size: 12px;
+      }
+      .output-label .dot {
+        background: #60a5fa;
+      }
+      .output-label::before {
+        content: "📤";
+        font-size: 12px;
+      }
+      .svg-label .dot {
+        background: #f472b6;
+      }
+      .svg-label::before {
+        content: "🖼️";
+        font-size: 12px;
+      }
+
+      canvas {
+        width: 100%;
+        height: 150px;
+        background: #fefefe;
+        border-radius: 8px;
+        cursor: crosshair;
+        touch-action: none;
+      }
+      #outputCanvas {
+        cursor: default;
+        background: #f8f8f8;
+      }
+
+      .svg-output-wrapper {
+        background: #0f0f1a;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        margin-bottom: 20px;
+      }
+      .svg-output-wrapper h2 {
+        margin-bottom: 12px;
+        font-weight: 400;
+        font-size: 14px;
+        color: #d0d0d0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .svg-container {
+        background: #fefefe;
+        border-radius: 8px;
+        min-height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .svg-container svg {
+        max-width: 100%;
+        height: auto;
+      }
+
+      .svg-config {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px;
+        margin-top: 12px;
+        padding: 12px;
+        background: #1a1a2e;
+        border-radius: 8px;
+        border: none;
+      }
+      .config-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .config-item label {
+        font-size: 12px;
+        color: #d0d0d0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .config-item input[type="number"],
+      .config-item input[type="text"],
+      .config-item select {
+        padding: 6px 8px;
+        border: 1px solid #374151;
+        border-radius: 4px;
+        background: #0f0f1a;
+        color: #e8e8e8;
+        font-size: 13px;
+        font-family: monospace;
+      }
+      .config-item input[type="color"] {
+        width: 100%;
+        height: 32px;
+        border: 1px solid #374151;
+        border-radius: 4px;
+        background: #0f0f1a;
+        cursor: pointer;
+      }
+      .config-item input[type="range"] {
+        width: 100%;
+        accent-color: #3b82f6;
+      }
+      .config-item .range-value {
+        font-size: 12px;
+        color: #7eb8da;
+        font-family: monospace;
+        text-align: right;
+      }
+      .config-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: #3b82f6;
+      }
+      .checkbox-row {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+      }
+      .checkbox-row label {
+        text-transform: none;
+        font-size: 13px;
+        color: #d0d0d0;
+      }
+
+      .controls {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+      }
+      button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+      }
+      .btn-primary {
+        background: #3b82f6;
+        color: white;
+      }
+      .btn-primary:hover {
+        background: #2563eb;
+      }
+      .btn-danger {
+        background: #ef4444;
+        color: white;
+      }
+      .btn-danger:hover {
+        background: #dc2626;
+      }
+      .btn-secondary {
+        background: #374151;
+        color: white;
+      }
+      .btn-secondary:hover {
+        background: #4b5563;
+      }
+
+      .output-section {
+        background: #0f0f1a;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 20px;
+      }
+      .output-section h2 {
+        margin-bottom: 12px;
+        font-weight: 400;
+        font-size: 14px;
+        color: #d0d0d0;
+      }
+      .encoded-output {
+        background: #1a1a2e;
+        border-radius: 8px;
+        padding: 12px;
+        font-family: monospace;
+        font-size: 12px;
+        word-break: break-all;
+        max-height: 80px;
+        overflow-y: auto;
+        color: #7eb8da;
+        line-height: 1.6;
+      }
+
+      .comparison-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 8px;
+      }
+      .comparison-item {
+        flex: 1;
+        background: #1a1a2e;
+        padding: 12px;
+        border-radius: 8px;
+      }
+      .comparison-item h3 {
+        font-size: 12px;
+        color: #d0d0d0;
+        margin-bottom: 6px;
+        font-weight: 400;
+      }
+      .comparison-item .size {
+        font-size: 20px;
+        font-weight: 600;
+        color: #7eb8da;
+        font-family: monospace;
+      }
+      .comparison-item .detail {
+        font-size: 12px;
+        color: #b8c4d4;
+        margin-top: 4px;
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      [aria-live] {
+        position: relative;
+      }
+
+      .breakdown-box {
+        margin-top: 12px;
+        padding: 12px;
+        background: #1a1a2e;
+        border-radius: 8px;
+      }
+      .breakdown-label {
+        font-size: 12px;
+        color: #d0d0d0;
+        margin-bottom: 8px;
+      }
+      .breakdown-content {
+        font-size: 12px;
+        font-family: monospace;
+        color: #7eb8da;
+      }
+      .output-label-block {
+        font-size: 12px;
+        color: #d0d0d0;
+        margin-bottom: 8px;
+        display: block;
+      }
+      .output-margin {
+        margin-top: 12px;
+      }
+
+      /* Focus indicators for accessibility */
+      button:focus-visible {
+        outline: 2px solid #60a5fa;
+        outline-offset: 2px;
+      }
+      input:focus-visible,
+      select:focus-visible {
+        outline: 2px solid #60a5fa;
+        outline-offset: 1px;
+      }
+      canvas:focus-visible {
+        outline: 3px solid #4ade80;
+        outline-offset: 2px;
+      }
+      .encoded-output:focus-visible {
+        outline: 2px solid #60a5fa;
+        outline-offset: 2px;
+      }
+
+      /* Reduced motion support */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <h1>Autopen Signature Tool</h1>
+      <p class="intro">
+        Draw a signature below to see it encoded using the Autopen format—a
+        compact binary serialization with delta encoding and arithmetic
+        compression. The decoded output shows the round-trip result.
+      </p>
+
+      <div class="canvas-section">
+        <div class="canvas-wrapper">
+          <h2 class="input-label">
+            <span class="dot" aria-hidden="true"></span> Draw Signature
+          </h2>
+          <canvas
+            id="inputCanvas"
+            aria-label="Signature drawing area. Use mouse or touch to draw."
+          ></canvas>
+        </div>
+        <div class="canvas-wrapper">
+          <h2 class="output-label">
+            <span class="dot" aria-hidden="true"></span> Decoded Output
+          </h2>
+          <canvas
+            id="outputCanvas"
+            aria-label="Decoded signature preview showing the result after encode and decode round-trip."
+          ></canvas>
+        </div>
+      </div>
+
+      <div class="svg-output-wrapper">
+        <h2 class="svg-label">
+          <span class="dot" aria-hidden="true"></span> SVG Render
+        </h2>
+        <div
+          class="svg-container"
+          id="svgContainer"
+          role="img"
+          aria-label="SVG rendering of the signature"
+          aria-live="polite"
+          aria-atomic="true"
+        ></div>
+        <fieldset class="svg-config">
+          <legend class="sr-only">SVG rendering options</legend>
+          <div class="config-item">
+            <label for="svgWidth">Width</label>
+            <input
+              type="number"
+              id="svgWidth"
+              value="512"
+              min="64"
+              max="2048"
+              aria-describedby="svgWidthHint"
+            />
+            <span id="svgWidthHint" class="sr-only"
+              >Range: 64 to 2048 pixels</span
+            >
+          </div>
+          <div class="config-item">
+            <label for="svgHeight">Height</label>
+            <input
+              type="number"
+              id="svgHeight"
+              value="256"
+              min="32"
+              max="1024"
+              aria-describedby="svgHeightHint"
+            />
+            <span id="svgHeightHint" class="sr-only"
+              >Range: 32 to 1024 pixels</span
+            >
+          </div>
+          <div class="config-item">
+            <label for="svgStrokeWidth">Stroke Width</label>
+            <input
+              type="range"
+              id="svgStrokeWidth"
+              value="2"
+              min="0.5"
+              max="10"
+              step="0.5"
+              aria-describedby="svgStrokeWidthValue"
+            />
+            <span
+              class="range-value"
+              id="svgStrokeWidthValue"
+              aria-live="polite"
+              >2</span
+            >
+          </div>
+          <div class="config-item">
+            <label for="svgStrokeColor">Stroke Color</label>
+            <input type="color" id="svgStrokeColor" value="#000000" />
+          </div>
+          <div class="config-item">
+            <label for="svgTension">Spline Tension</label>
+            <input
+              type="range"
+              id="svgTension"
+              value="0.5"
+              min="0"
+              max="1"
+              step="0.05"
+              aria-describedby="svgTensionValue"
+            />
+            <span class="range-value" id="svgTensionValue" aria-live="polite"
+              >0.5</span
+            >
+          </div>
+          <div class="config-item">
+            <label for="svgBgColor">Background</label>
+            <input type="color" id="svgBgColor" value="#ffffff" />
+          </div>
+          <div class="config-item checkbox-row">
+            <input
+              type="checkbox"
+              id="svgSpline"
+              checked
+              aria-describedby="svgSplineHint"
+            />
+            <label for="svgSpline">Use Spline</label>
+            <span id="svgSplineHint" class="sr-only"
+              >Smooth curves using Catmull-Rom spline interpolation</span
+            >
+          </div>
+          <div class="config-item checkbox-row">
+            <input
+              type="checkbox"
+              id="svgUseBg"
+              aria-describedby="svgUseBgHint"
+            />
+            <label for="svgUseBg">Show Background</label>
+            <span id="svgUseBgHint" class="sr-only"
+              >Add solid background color to SVG output</span
+            >
+          </div>
+          <div class="config-item checkbox-row">
+            <input
+              type="checkbox"
+              id="svgContentFit"
+              checked
+              aria-describedby="svgContentFitHint"
+            />
+            <label for="svgContentFit">Content Fit</label>
+            <span id="svgContentFitHint" class="sr-only"
+              >Scale to fit signature content instead of full canvas</span
+            >
+          </div>
+          <div class="config-item">
+            <label for="svgContentPadding">Fit Padding</label>
+            <input
+              type="range"
+              id="svgContentPadding"
+              value="0.05"
+              min="0"
+              max="0.25"
+              step="0.01"
+              aria-describedby="svgContentPaddingValue"
+            />
+            <span
+              class="range-value"
+              id="svgContentPaddingValue"
+              aria-live="polite"
+              >5%</span
+            >
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="controls" role="toolbar" aria-label="Signature actions">
+        <button class="btn-danger" id="clearBtn">Clear</button>
+        <button class="btn-secondary" id="undoBtn">Undo</button>
+        <button class="btn-primary" id="loadSampleBtn">Load Sample</button>
+        <button class="btn-primary" id="loadZ85Btn">Load Z85</button>
+        <button class="btn-secondary" id="copyBtn">Copy Z85</button>
+        <button class="btn-secondary" id="copySvgBtn">Copy SVG</button>
+      </div>
+      <div
+        aria-live="polite"
+        aria-atomic="true"
+        class="sr-only"
+        id="statusAnnouncer"
+      ></div>
+
+      <div class="output-section">
+        <h2>Encoding Output</h2>
+        <div class="comparison-row">
+          <div class="comparison-item" id="rawComp">
+            <h3>Raw (uncompressed)</h3>
+            <div class="size" id="rawSize">0</div>
+            <div class="detail" id="rawDetail">0 bytes payload</div>
+          </div>
+          <div class="comparison-item" id="arithComp">
+            <h3>Final (with arithmetic)</h3>
+            <div class="size" id="arithSize">0</div>
+            <div class="detail" id="arithDetail">0 Z85 chars</div>
+          </div>
+        </div>
+        <div class="breakdown-box">
+          <div class="breakdown-label">Encoding Breakdown:</div>
+          <div id="deltaBreakdown" class="breakdown-content">
+            Delta (2B): 0 | Absolute (3B): 0 | Strokes: 0
+          </div>
+        </div>
+        <div class="output-margin">
+          <label for="encodedOutput" class="output-label-block"
+            >Encoded Output (Z85):</label
+          >
+          <div
+            class="encoded-output"
+            id="encodedOutput"
+            tabindex="0"
+            aria-label="Encoded signature output"
+          >
+            Draw a signature...
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
