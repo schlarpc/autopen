@@ -1,6 +1,6 @@
 {
   "name": "autopen",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Compact binary serialization for hand-drawn signatures with delta encoding and arithmetic compression",
   "keywords": [
     "signature",
