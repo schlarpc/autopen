@@ -60,7 +60,7 @@
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.0.16",
-    "eslint": "^9.39.2",
+    "eslint": "^10.0.0",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.7.4",
     "tsup": "^8.0.0",
